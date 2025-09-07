@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Student Dashboard</title>
-    <script defer src="script.js"></script>
     <style>
         * {
             margin: 0;
@@ -118,5 +117,48 @@
         VIT, Chennai-600 127. All rights reserved.
     </footer>
 
+    <script>
+        function markAttendance() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(success, error);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+
+            function success(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                fetch("/mark_attendance", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ lat, lon })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message); // ✅ ya ❌ message show karega
+                })
+                .catch(err => console.error("Error:", err));
+            }
+
+            function error() {
+                alert("Unable to retrieve your location. Please enable GPS.");
+            }
+        }
+
+        // Optional: Agar tum backend se attendance list fetch karna chahte ho
+        function viewAttendance() {
+            fetch("/api/attendance")
+            .then(res => res.json())
+            .then(data => {
+                const listDiv = document.getElementById("attendanceList");
+                listDiv.innerHTML = "<h3>My Attendance:</h3><ul>" +
+                    data.map(a => `<li>${a.date} - ${a.status}</li>`).join("") +
+                    "</ul>";
+            })
+            .catch(err => console.error("Error:", err));
+        }
+    </script>
 </body>
 </html>
+
