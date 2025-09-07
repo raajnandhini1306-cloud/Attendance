@@ -31,6 +31,7 @@ function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
+// Mark attendance with location + student details
 app.post("/mark_attendance", (req, res) => {
     const { student_id, student_name, lat, lon } = req.body;
 
@@ -60,13 +61,32 @@ app.post("/mark_attendance", (req, res) => {
     }
 });
 
-// -----------------------------------------------------------
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+// Student ka apna attendance
+app.get("/api/attendance/:studentId", (req, res) => {
+    const studentId = req.params.studentId;
+    db.all(
+        `SELECT date, status FROM attendance WHERE student_id = ? ORDER BY date DESC`,
+        [studentId],
+        (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: "DB error" });
+            }
+            res.json(rows);
+        }
+    );
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+// Teacher Dashboard (all students)
+app.get("/api/attendance/all", (req, res) => {
+    db.all(
+        `SELECT student_id, student_name, date, status FROM attendance ORDER BY date DESC`,
+        [],
+        (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: "DB error" });
+            }
+            res.json(rows);
+        }
+    );
 });
+
