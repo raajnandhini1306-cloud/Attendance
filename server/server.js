@@ -1,3 +1,8 @@
+// Allowed hostel coordinates
+const allowedLat = 12.8421;
+const allowedLon = 80.1559;
+const allowedRadius = 100; // meters
+
 const express = require('express');
 const cors = require('cors');
 
