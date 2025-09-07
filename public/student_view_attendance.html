@@ -49,30 +49,26 @@
   <div id="attendanceTable"></div>
 
   <script>
-    async function loadStudentAttendance() {
-      const response = await fetch('/api/view-attendance', { method: 'POST' });
-      const data = await response.json();
+async function loadAttendance() {
+    const studentId = "21BCE1234"; 
+    const res = await fetch(`/api/attendance/${studentId}`);
+    const data = await res.json();
 
-      if (data.success && data.attendance.length > 0) {
-        let html = "<table><tr><th>S.No</th><th>Date</th><th>Time</th><th>Status</th></tr>";
+    const tbody = document.getElementById("attendanceBody");
+    tbody.innerHTML = "";
 
-        data.attendance.forEach((record, index) => {
-          html += `<tr>
-                      <td>${index + 1}</td>
-                      <td>${record.date}</td>
-                      <td>${record.time}</td>
-                      <td>${record.status}</td>
-                   </tr>`;
-        });
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.date}</td>
+            <td>${row.status}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
 
-        html += "</table>";
-        document.getElementById("attendanceTable").innerHTML = html;
-      } else {
-        document.getElementById("attendanceTable").innerHTML = "<p id='noData'>No attendance records found.</p>";
-      }
-    }
+window.onload = loadAttendance;
+</script>
 
-    loadStudentAttendance();
-  </script>
 </body>
 </html>
