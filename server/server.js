@@ -1,3 +1,5 @@
+// server.js
+require('dotenv').config(); // Load .env variables
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -7,6 +9,7 @@ const db = require('./db');
 
 const app = express();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
@@ -15,9 +18,9 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api', authRoutes);
 
 // ------------------ Location Restriction ------------------
-const allowedLat = 12.8421;
-const allowedLon = 80.1559;
-const allowedRadius = 100; // meters
+const allowedLat = parseFloat(process.env.ALLOWED_LAT) || 12.8421;
+const allowedLon = parseFloat(process.env.ALLOWED_LON) || 80.1559;
+const allowedRadius = parseFloat(process.env.ALLOWED_RADIUS) || 100; // meters
 
 function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
     const R = 6371000; // meters
@@ -61,7 +64,7 @@ app.post("/mark_attendance", (req, res) => {
     }
 });
 
-// Student ka apna attendance
+// Student's own attendance
 app.get("/api/attendance/:studentId", (req, res) => {
     const studentId = req.params.studentId;
     db.all(
@@ -90,3 +93,8 @@ app.get("/api/attendance/all", (req, res) => {
     );
 });
 
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
