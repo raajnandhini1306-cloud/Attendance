@@ -32,7 +32,7 @@ function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
 }
 
 app.post("/mark_attendance", (req, res) => {
-    const { lat, lon } = req.body;
+    const { student_id, student_name, lat, lon } = req.body;
 
     if (!lat || !lon) {
         return res.status(400).json({ message: "Location not provided" });
@@ -41,12 +41,25 @@ app.post("/mark_attendance", (req, res) => {
     const distance = getDistanceFromLatLonInMeters(lat, lon, allowedLat, allowedLon);
 
     if (distance <= allowedRadius) {
-        // TODO: DB query to save attendance
-        return res.json({ message: "✅ Attendance marked successfully!" });
+        const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+        db.run(
+            `INSERT INTO attendance (student_id, student_name, date, status, latitude, longitude)
+             VALUES (?, ?, ?, 'Present', ?, ?)`,
+            [student_id, student_name, date, lat, lon],
+            function (err) {
+                if (err) {
+                    console.error("DB insert error:", err.message);
+                    return res.status(500).json({ message: "DB error" });
+                }
+                res.json({ message: "✅ Attendance marked successfully!" });
+            }
+        );
     } else {
-        return res.json({ message: "❌ You are not in the allowed location!" });
+        res.json({ message: "❌ You are not in the allowed location!" });
     }
 });
+
 // -----------------------------------------------------------
 
 app.get('*', (req, res) => {
