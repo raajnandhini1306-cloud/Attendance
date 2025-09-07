@@ -1,13 +1,14 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const db = require('./db');
 
-const dbPath = path.join(__dirname, 'data', 'DB.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Database connection error:', err.message);
-    } else {
-        console.log(`Connected to database: ${dbPath}`);
-    }
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS attendance (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id TEXT NOT NULL,
+      student_name TEXT NOT NULL,
+      date TEXT NOT NULL,
+      status TEXT DEFAULT 'Present',
+      latitude REAL,
+      longitude REAL,
+      marked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
-
-module.exports = db;
