@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Teacher - View Attendance</title>
+  <title>View Attendance</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,10 +11,8 @@
       background-color: #f4f4f4;
     }
 
-    h2 {
-      text-align: center;
+    h3, h4 {
       color: #2c3e50;
-      margin-bottom: 20px;
     }
 
     table {
@@ -37,47 +35,82 @@
     td {
       background-color: #ecf0f1;
     }
+
+    button {
+      margin: 10px 0;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      background-color: #2ecc71;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #27ae60;
+    }
   </style>
 </head>
 <body>
-  <h2>All Students Attendance</h2>
-  <table id="attendanceTable">
-    <thead>
-      <tr>
-        <th>S.No</th>
-        <th>Student ID</th>
-        <th>Name</th>
-        <th>Date</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h3>Grouped Attendance for Today</h3>
+  <div id="attendanceContent">Loading attendance...</div>
 
   <script>
-    async function loadAttendance() {
-      const response = await fetch('/api/attendance/all');
-      const data = await response.json();
-
-      const tbody = document.querySelector("#attendanceTable tbody");
-      tbody.innerHTML = "";
-
-      data.forEach((record, index) => {
-        const row = `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${record.student_id}</td>
-            <td>${record.student_name}</td>
-            <td>${record.date}</td>
-            <td>${record.status}</td>
-          </tr>
-        `;
-        tbody.innerHTML += row;
+    let attendanceData = [];
+  
+    function downloadCSV(groupIndex) {
+      const group = attendanceData[groupIndex];
+      let csvContent = "S.No,Reg Number,Name,Time\n";
+      group.forEach((student, index) => {
+        csvContent += `${index + 1},${student.reg_number},${student.name},${student.time}\n`;
       });
+  
+      csvContent += `\nTotal Students,${group.length}\n`;
+  
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Group_${groupIndex + 1}_Attendance.csv`);
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
-
+  
+    async function loadAttendance() {
+      try {
+        const response = await fetch('/faculty-view-attendance', { method: 'POST' });
+        const data = await response.json();
+  
+        if (data.success) {
+          attendanceData = data.groupedAttendance;
+          let html = '';
+  
+          data.groupedAttendance.forEach((group, index) => {
+            if (group.length === 0) return;
+  
+            html += `<h4>Group ${index + 1} - Date: ${group[0].date}</h4>`;
+            html += `<button onclick='downloadCSV(${index})'>Download CSV</button>`;
+            html += "<table><tr><th>S.No</th><th>Reg Number</th><th>Name</th><th>Time</th></tr>";
+  
+            group.forEach((student, i) => {
+              html += `<tr><td>${i + 1}</td><td>${student.reg_number}</td><td>${student.name}</td><td>${student.time}</td></tr>`;
+            });
+  
+            html += "</table><br>";
+          });
+  
+          document.getElementById("attendanceContent").innerHTML = html || "<p>No attendance found.</p>";
+        } else {
+          document.getElementById("attendanceContent").innerHTML = "<p>Error fetching attendance data.</p>";
+        }
+      } catch (err) {
+        document.getElementById("attendanceContent").innerHTML = "<p>Server error. Please try again later.</p>";
+      }
+    }
+  
     loadAttendance();
-  </script>
+  </script>  
 </body>
 </html>
-
